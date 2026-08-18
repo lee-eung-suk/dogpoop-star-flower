@@ -93,7 +93,8 @@ p.desc { color: #7d5c3e; font-size: clamp(11px, 2.1vw, 16px); margin-bottom: 12p
 /* ---------- HUD ---------- */
 .hud {
   position: absolute;
-  top: 9px; left: 10px; right: 10px;
+  top: 9px; left: 10px;
+  right: clamp(50px, 7vw, 62px);   /* 음소거 버튼 자리를 비워둔다 */
   z-index: 20;
   display: none;
   justify-content: space-between;

@@ -37,6 +37,13 @@ export function renderStandardHud(rt, opts) {
   coin.textContent = `🪙 ${rt.coins}`;
   right.appendChild(coin);
 
+  if (o.extraPill) {
+    const extra = document.createElement('div');
+    extra.className = 'pill ability';
+    extra.textContent = o.extraPill;
+    right.appendChild(extra);
+  }
+
   if (o.showNutrient) {
     const gaugeWrap = document.createElement('div');
     gaugeWrap.className = 'pill';

@@ -227,6 +227,7 @@ export const ITEM_DEFS = {
   dew:     { emoji: '💧', image: 'item_dew.png',  w: 28, h: 28, sfx: 'coin', nutrient: 10 },
   sun:     { emoji: '☀️', image: 'item_sun.png',  w: 28, h: 28, sfx: 'coin', nutrient: 15 },
   hail:    { emoji: '❄️', image: 'item_hail.png', w: 28, h: 28, sfx: 'bad',  nutrient: -10 },
+  piece:   { emoji: '✨', image: null,            w: 30, h: 30, sfx: 'star', piece: true },
 };
 
 export function makeItem(kind, x, y) {

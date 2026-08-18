@@ -281,7 +281,7 @@ export function createLevelRuntime(cfg) {
     if (d.nutrient) {
       rt.nutrient = Math.max(0, Math.min(100, rt.nutrient + d.nutrient));
       if (d.nutrient < 0) camera.shake(4);
-    } else if (!d.heal && !d.healAll && !d.invincible && !d.life) {
+    } else if (!d.heal && !d.healAll && !d.invincible && !d.life && !d.piece) {
       rt.coins += 1;
     }
     if (rt.coins >= 100) {

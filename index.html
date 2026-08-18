@@ -63,8 +63,8 @@
 
   <div class="screen" id="screen-s3-intro">
     <div class="mascot">🌱</div>
-    <h2>3. 민들레와 꼭 껴안기</h2>
-    <p class="desc">영양분이 가득 찬 강아지똥이 민들레 뿌리로 스며들어요.<br>스페이스바를 연타해줘!</p>
+    <h2>3. 별빛 길 — 별꽃 피우기</h2>
+    <p class="desc">마지막 길이야! 반짝이는 <b>별조각 ✨ 5개</b>를 모아<br>길 끝의 민들레에게 가져다주면 별꽃이 피어나.<br>별조각은 9개나 있으니 몇 개는 놓쳐도 괜찮아!</p>
     <button class="btn" id="btn-s3-go">꽃 피우기!</button>
   </div>
 
@@ -127,10 +127,9 @@ loadImages(IMAGE_NAMES).then((images) => {
   const level2 = createLevel2(canvasCtx, images, root, hud, input, {
     onSuccess: () => { level2.stop(); setPlaying(false, false); showScreen('screen-s3-intro'); },
   });
-  const level3 = createLevel3(canvasCtx, images, root, hud, input, canvas, {
+  const level3 = createLevel3(canvasCtx, images, root, hud, input, {
     onFinish: () => { level3.stop(); setPlaying(false, false); showScreen('screen-ending'); },
   });
-  level3.mount();
 
   const NOTES = {
     easy: '쉬움: 하트 8개 · 목숨 4개 · 적이 느려요',
@@ -173,7 +172,7 @@ loadImages(IMAGE_NAMES).then((images) => {
     showScreen(null); setPlaying(true, true); level2.start();
   });
   document.getElementById('btn-s3-go').addEventListener('click', () => {
-    showScreen(null); setPlaying(false, true); level3.start();
+    showScreen(null); setPlaying(true, true); level3.start();
   });
   document.getElementById('btn-restart').addEventListener('click', () => {
     showScreen('screen-title');
