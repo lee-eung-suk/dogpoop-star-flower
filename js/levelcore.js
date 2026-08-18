@@ -188,6 +188,7 @@ export function createLevelRuntime(cfg) {
       it.abilityKey = key;
       it.def = { emoji: ABILITIES[key].icon, image: null, w: 28, h: 28 };
       it.w = 28; it.h = 28;
+      it.pickupDelay = 0.9;
       rt.items.push(it);
       updateHud();
     },
@@ -293,6 +294,15 @@ export function createLevelRuntime(cfg) {
     if (cfg.onCollect) cfg.onCollect(rt, it);
   }
   rt.collectItem = collectItem;
+
+  // 레벨(보스 등)에서 플레이어에게 피해를 줄 때 쓴다.
+  // 죽으면 목숨 처리까지 여기서 끝내고 true 를 돌려준다.
+  rt.hurtPlayer = (fromX) => {
+    if (!hurtPlayer(player, env, fromX)) return false;
+    updateHud();
+    if (player.dead) { loseLife(); return true; }
+    return true;
+  };
 
   function loseLife() {
     player.lives -= 1;
@@ -475,7 +485,8 @@ export function createLevelRuntime(cfg) {
 
     // 아이템
     for (const it of rt.items) {
-      if (!it.taken && rectsOverlap(phb, it)) collectItem(it);
+      if (it.taken || it.pickupDelay > 0) continue;
+      if (rectsOverlap(phb, it)) collectItem(it);
     }
 
     // 낙사
@@ -549,6 +560,15 @@ export function createLevelRuntime(cfg) {
         ctx.fillStyle = 'rgba(255,255,255,0.75)';
         ctx.fill();
         continue;
+      }
+      if (it.kind === 'ability') {
+        ctx.save();
+        ctx.globalAlpha = 0.5 + Math.sin(rt.time * 6) * 0.25;
+        ctx.fillStyle = ABILITIES[it.abilityKey].color;
+        ctx.beginPath();
+        ctx.arc(ix + it.w / 2, iy + it.h / 2, it.w * 0.72, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
       }
       drawSprite(ctx, images, it.def.image, it.def.emoji, ix, iy, it.w, it.h, false);
     }

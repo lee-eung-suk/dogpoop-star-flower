@@ -172,13 +172,22 @@ export function createLevel1(canvasCtx, images, root, hud, input, { onSuccess })
           }
         }
 
-        // 무적 상태로 들이받아도 대미지
+        // 보스 몸통 접촉
         if (boss.alive && boss.state !== 'dead' && boss.state !== 'intro') {
           const hb = { x: boss.x - boss.w / 2, y: boss.y, w: boss.w, h: boss.h };
           const overlap = p.x < hb.x + hb.w && p.x + p.w > hb.x && p.y < hb.y + hb.h && p.y + p.h > hb.y;
-          if (overlap && p.invincible > 0) {
-            damageBoss(boss, bossEnv, 1);
-            p.vx = (p.x < boss.x ? -1 : 1) * 260;
+          if (overlap) {
+            if (p.invincible > 0) {
+              // 무적 별사탕 상태로 들이받으면 오히려 보스가 아프다
+              damageBoss(boss, bossEnv, 1);
+              p.vx = (p.x < boss.x ? -1 : 1) * 260;
+            } else if (p.rolling) {
+              // 구르기는 무적이라 튕겨나기만 한다
+              p.vx = (p.x < boss.x ? -1 : 1) * 300;
+            } else {
+              // 그냥 닿으면 아프다 (예전엔 아무 일도 없었다)
+              rt.hurtPlayer(boss.x);
+            }
           }
         }
       }

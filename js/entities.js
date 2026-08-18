@@ -245,6 +245,7 @@ export function makeItem(kind, x, y) {
 export function bobItems(items, dt) {
   for (const it of items) {
     if (it.taken) continue;
+    if (it.pickupDelay > 0) it.pickupDelay -= dt;   // 방금 버린 능력을 즉시 다시 줍지 않도록
     it.t += dt;
     it.y = it.baseY + Math.sin(it.t * 3) * 4;
   }

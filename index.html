@@ -13,15 +13,19 @@
   <button class="sound-btn" id="btn-mute" title="배경음악 켜기/끄기" aria-label="배경음악 켜기/끄기">🔊</button>
 
   <div class="touch-controls" id="touch-controls">
-    <div class="dpad">
-      <button class="touch-btn" id="btn-left">◀</button>
-      <button class="touch-btn" id="btn-right">▶</button>
-      <button class="touch-btn" id="btn-down">▼</button>
+    <div class="pad-left">
+      <button class="touch-btn wide" id="btn-left" aria-label="왼쪽">◀</button>
+      <button class="touch-btn wide" id="btn-right" aria-label="오른쪽">▶</button>
     </div>
-    <div class="actions">
-      <button class="touch-btn" id="btn-roll">🌀</button>
-      <button class="touch-btn" id="btn-action">💨</button>
-      <button class="touch-btn big" id="btn-jump">⤴</button>
+    <div class="pad-right">
+      <div class="pad-row">
+        <button class="touch-btn" id="btn-roll" aria-label="구르기">🌀</button>
+        <button class="touch-btn" id="btn-down" aria-label="삼키기 / 능력 버리기">⬇</button>
+      </div>
+      <div class="pad-row">
+        <button class="touch-btn" id="btn-action" aria-label="빨아들이기 / 뱉기">💨</button>
+        <button class="touch-btn big" id="btn-jump" aria-label="점프">⤴</button>
+      </div>
     </div>
   </div>
 
@@ -38,33 +42,33 @@
   </div>
 
   <div class="screen" id="screen-s1-intro">
-    <h2>1. 시골길과 꼬꼬대왕 👑🐔</h2>
-    <p class="desc">달리고 뛰어서 길 끝까지! 마지막엔 꼬꼬대왕이 기다려.</p>
-    <div class="controls-card">
-      <div class="ctrl"><b>← →</b> 달리기</div>
-      <div class="ctrl"><b>↑ / Space</b> 점프 → 공중에서 한 번 더 = 이단점프</div>
-      <div class="ctrl"><b>한 번 더 누르면</b> 둥실 날기<br>(누르고 있으면 뜨고, 떼면 천천히 내려와)</div>
-      <div class="ctrl"><b>X</b> 구르기 — 구르는 동안 무적</div>
-      <div class="ctrl"><b>Shift</b> 꾹 = 빨아들이기<br>다시 누르면 뱉기(별 탄환)</div>
-      <div class="ctrl"><b>↓</b> 삼키기 = 능력 획득!</div>
+    <h2>1. 시골길 🐔</h2>
+    <p class="desc">길 끝까지 달려가자! 꼬꼬대왕이 기다려.</p>
+
+    <div class="howto">
+      <div class="how"><span class="how-ico">🏃</span><span class="how-key">← →</span><b>달리기</b></div>
+      <div class="how"><span class="how-ico">🦘</span><span class="how-key">↑</span><b>점프</b><em>두 번 = 두단</em></div>
+      <div class="how"><span class="how-ico">🎈</span><span class="how-key">↑ 꾹</span><b>둥실 날기</b></div>
+      <div class="how"><span class="how-ico">🌀</span><span class="how-key">X</span><b>구르기</b><em>무적!</em></div>
+      <div class="how"><span class="how-ico">💨</span><span class="how-key">Shift</span><b>후~ 빨아들이기</b><em>다시 = 퉤!</em></div>
+      <div class="how"><span class="how-ico">✨</span><span class="how-key">↓</span><b>꿀꺽! 능력</b><em>다시 = 버리기</em></div>
     </div>
-    <p class="desc"><b>능력은 5가지가 전부 다르게 작동해요</b><br>
-      ☀️ 햇살 = 관통 빔 · 💧 이슬 = 튕기는 물방울 · 🌱 새싹 = 넓은 채찍<br>
-      🪶 깃털 = 회오리 세우기 + 활공 · ❄️ 얼음 = <b>적을 얼려 발판으로!</b></p>
+
+    <p class="desc small">적을 삼키면 힘이 생겨요 &nbsp; ☀️ 💧 🌱 🪶 ❄️</p>
     <button class="btn" id="btn-s1-go">출발!</button>
   </div>
 
   <div class="screen" id="screen-s2-intro">
     <div class="mascot">💧</div>
-    <h2>2. 이슬 정원 (위로 올라가자!)</h2>
-    <p class="desc">둥실 날기로 위로 위로! 이슬💧과 햇살☀️을 모아 영양분을 100%로.<br>움직이는 발판, 밟으면 무너지는 발판, 점프대를 잘 이용해봐.<br>차가운 우박❄️은 피해야 해.</p>
+    <h2>2. 이슬 정원 💧</h2>
+    <p class="desc">둥실 날아서 <b>위로 위로!</b><br>💧☀️ 모아서 영양분 100% &nbsp;·&nbsp; ❄️ 우박은 피하기</p>
     <button class="btn" id="btn-s2-go">올라가자!</button>
   </div>
 
   <div class="screen" id="screen-s3-intro">
     <div class="mascot">🌱</div>
-    <h2>3. 별빛 길 — 별꽃 피우기</h2>
-    <p class="desc">마지막 길이야! 반짝이는 <b>별조각 ✨ 5개</b>를 모아<br>길 끝의 민들레에게 가져다주면 별꽃이 피어나.<br>별조각은 9개나 있으니 몇 개는 놓쳐도 괜찮아!</p>
+    <h2>3. 별빛 길 ✨</h2>
+    <p class="desc"><b>별조각 ✨ 5개</b>를 모아 길 끝 민들레에게!<br>9개나 있으니 몇 개는 놓쳐도 괜찮아 🌼</p>
     <button class="btn" id="btn-s3-go">꽃 피우기!</button>
   </div>
 
@@ -93,7 +97,13 @@ const hud = document.getElementById('hud');
 const touchControls = document.getElementById('touch-controls');
 const canvasCtx = setupCanvas(canvas);
 
-if (window.matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch-device');
+// 태블릿/노트북 겸용 기기도 있으니 터치 지원 여부를 함께 본다
+const hasTouch = window.matchMedia('(pointer: coarse)').matches
+  || ('ontouchstart' in window)
+  || navigator.maxTouchPoints > 0;
+if (hasTouch) document.body.classList.add('touch-device');
+// 첫 터치가 감지되면 그때라도 가상키를 켠다
+window.addEventListener('touchstart', () => document.body.classList.add('touch-device'), { once: true, passive: true });
 
 const input = new Input({
   left: document.getElementById('btn-left'),

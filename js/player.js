@@ -116,8 +116,20 @@ export function updatePlayer(p, dt, env) {
     particles.spawn(p.x + p.w / 2, p.y + p.h, 8, ['#e0c9a6', '#fff'], { speed: 90, lift: 10, life: 0.35, size: 3 });
   }
 
-  // ---- 삼키기 (입에 문 상태에서 ↓) ----
-  if (p.mouthful && input.consume('down')) {
+  // ---- ↓ : 입에 문 걸 삼키기 / 가진 능력 버리기 ----
+  const downPressed = input.consume('down');
+
+  // 능력을 갖고 있으면 흡입이 막히므로, 버릴 수 있어야 다른 능력으로 바꿀 수 있다
+  if (downPressed && !p.mouthful && p.ability) {
+    const dropped = p.ability;
+    p.ability = null;
+    p.attackHitbox = null;
+    Sound.spit();
+    camera.shake(3);
+    particles.spawn(p.x + p.w / 2, p.y + p.h / 2, 14, [ABILITIES[dropped].color, '#fff'],
+      { speed: 170, lift: 80, star: true });
+    if (env.onAbilityLost) env.onAbilityLost(dropped, p.x + p.w / 2, p.y - 10);
+  } else if (p.mouthful && downPressed) {
     const key = env.abilityOf ? env.abilityOf(p.mouthful) : null;
     p.mouthful = null;
     if (key && ABILITIES[key]) {

@@ -71,24 +71,37 @@ p.desc { color: #7d5c3e; font-size: clamp(11px, 2.1vw, 16px); margin-bottom: 12p
 .mascot { font-size: clamp(34px, 7vw, 66px); margin-bottom: 6px; animation: bob 1.4s ease-in-out infinite; }
 @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
 
-/* 조작 안내 카드 */
-.controls-card {
+/* 조작 안내 — 큰 아이콘 + 짧은 말 (닌텐도식) */
+.howto {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
-  gap: 6px;
-  max-width: 660px;
-  width: 100%;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(6px, 1.2vw, 12px);
+  width: min(96%, 640px);
+  margin-bottom: clamp(8px, 1.6vw, 14px);
 }
-.ctrl {
-  background: rgba(255,255,255,0.82);
-  border-radius: 10px;
-  padding: 6px 8px;
-  font-size: clamp(10px, 1.7vw, 13px);
-  color: #6b4a2b;
-  line-height: 1.35;
+.how {
+  background: rgba(255,255,255,0.92);
+  border-radius: 16px;
+  padding: clamp(7px, 1.4vw, 12px) 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  box-shadow: 0 3px 0 rgba(122,74,43,0.14);
 }
-.ctrl b { display: block; color: #4a2e0e; font-size: clamp(11px, 1.9vw, 14px); }
+.how-ico { font-size: clamp(20px, 3.6vw, 30px); line-height: 1.1; }
+.how-key {
+  background: #7a4a2b;
+  color: #fff;
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: clamp(9px, 1.5vw, 12px);
+  font-weight: bold;
+  white-space: nowrap;
+}
+.how b { color: #4a2e0e; font-size: clamp(10px, 1.7vw, 14px); }
+.how em { color: #9a7856; font-style: normal; font-size: clamp(9px, 1.4vw, 11px); }
+p.desc.small { font-size: clamp(10px, 1.7vw, 14px); margin-bottom: 10px; }
 
 /* ---------- HUD ---------- */
 .hud {
@@ -135,25 +148,52 @@ p.desc { color: #7d5c3e; font-size: clamp(11px, 2.1vw, 16px); margin-bottom: 12p
   white-space: nowrap;
 }
 
-/* ---------- 터치 컨트롤 ---------- */
+/* ---------- 터치 컨트롤 (모바일 가상키) ---------- */
 .touch-controls { position: absolute; inset: 0; z-index: 30; display: none; pointer-events: none; }
 .touch-device .touch-controls.active { display: block; }
-.dpad { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 8px; }
-.actions { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; align-items: flex-end; }
+
+.pad-left {
+  position: absolute;
+  left: clamp(8px, 2vw, 18px);
+  bottom: clamp(8px, 2vw, 18px);
+  display: flex;
+  gap: clamp(6px, 1.2vw, 10px);
+}
+.pad-right {
+  position: absolute;
+  right: clamp(8px, 2vw, 18px);
+  bottom: clamp(8px, 2vw, 18px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(6px, 1.2vw, 10px);
+  align-items: flex-end;
+}
+.pad-row { display: flex; gap: clamp(6px, 1.2vw, 10px); align-items: flex-end; }
+
 .touch-btn {
-  width: clamp(44px, 9vw, 62px);
-  height: clamp(44px, 9vw, 62px);
+  width: clamp(52px, 10vw, 68px);
+  height: clamp(52px, 10vw, 68px);
   border-radius: 50%;
-  background: rgba(74,46,14,0.32);
+  background: rgba(74,46,14,0.34);
   color: #fff;
-  border: 2px solid rgba(255,255,255,0.65);
-  font-size: clamp(16px, 3vw, 24px);
+  border: 2px solid rgba(255,255,255,0.7);
+  font-size: clamp(19px, 3.4vw, 26px);
   display: flex; align-items: center; justify-content: center;
   pointer-events: auto;
   touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  padding: 0;
 }
-.touch-btn:active { background: rgba(74,46,14,0.6); }
-.touch-btn.big { width: clamp(52px, 11vw, 74px); height: clamp(52px, 11vw, 74px); }
+.touch-btn.wide { width: clamp(62px, 12vw, 82px); border-radius: 34px; }
+.touch-btn.big {
+  width: clamp(64px, 12.5vw, 86px);
+  height: clamp(64px, 12.5vw, 86px);
+  background: rgba(255,183,3,0.55);
+  border-color: rgba(255,255,255,0.9);
+}
+.touch-btn:active { background: rgba(74,46,14,0.62); transform: scale(0.94); }
+.touch-btn.big:active { background: rgba(255,183,3,0.85); }
 
 /* ---------- 기타 ---------- */
 .orientation-notice {
