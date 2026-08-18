@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>강아지똥: 별꽃 피우기 대작전</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game-root">
+  <canvas id="game-canvas"></canvas>
+  <div class="hud" id="hud"></div>
+
+  <div class="touch-controls" id="touch-controls">
+    <div class="dpad">
+      <button class="touch-btn" id="btn-left">◀</button>
+      <button class="touch-btn" id="btn-right">▶</button>
+      <button class="touch-btn" id="btn-down">▼</button>
+    </div>
+    <div class="actions">
+      <button class="touch-btn" id="btn-roll">🌀</button>
+      <button class="touch-btn" id="btn-action">💨</button>
+      <button class="touch-btn big" id="btn-jump">⤴</button>
+    </div>
+  </div>
+
+  <div class="screen active" id="screen-title">
+    <div class="mascot">🐾</div>
+    <h1>강아지똥의 별꽃 피우기 대작전!</h1>
+    <p class="desc">세상에 쓸모없는 것은 없어! 우리는 모두 소중해 🌼</p>
+    <button class="btn" id="btn-start">시작하기</button>
+  </div>
+
+  <div class="screen" id="screen-s1-intro">
+    <h2>1. 시골길과 꼬꼬대왕 👑🐔</h2>
+    <p class="desc">달리고 뛰어서 길 끝까지! 마지막엔 꼬꼬대왕이 기다려.</p>
+    <div class="controls-card">
+      <div class="ctrl"><b>← →</b> 달리기</div>
+      <div class="ctrl"><b>↑ / Space</b> 점프 → 한 번 더 = 이단점프 → 계속 누르면 <b>둥실 날기</b></div>
+      <div class="ctrl"><b>X</b> 구르기 (무적! 적을 밀쳐)</div>
+      <div class="ctrl"><b>Shift</b> 길게 = 빨아들이기</div>
+      <div class="ctrl"><b>Shift</b> 다시 = 뱉기 (별 탄환)</div>
+      <div class="ctrl"><b>↓</b> 삼키기 = <b>능력 획득!</b></div>
+    </div>
+    <p class="desc">🐔 꼬꼬 = 깃털 · 🌱 새싹이 = 덩굴 · 🔥 핫치 = 햇살 · ❄️ 우박정령 = 얼음</p>
+    <button class="btn" id="btn-s1-go">출발!</button>
+  </div>
+
+  <div class="screen" id="screen-s2-intro">
+    <div class="mascot">💧</div>
+    <h2>2. 이슬 정원 (위로 올라가자!)</h2>
+    <p class="desc">둥실 날기로 위로 위로! 이슬💧과 햇살☀️을 모아 영양분을 100%로.<br>차가운 우박❄️은 피해야 해.</p>
+    <button class="btn" id="btn-s2-go">올라가자!</button>
+  </div>
+
+  <div class="screen" id="screen-s3-intro">
+    <div class="mascot">🌱</div>
+    <h2>3. 민들레와 꼭 껴안기</h2>
+    <p class="desc">영양분이 가득 찬 강아지똥이 민들레 뿌리로 스며들어요.<br>스페이스바를 연타해줘!</p>
+    <button class="btn" id="btn-s3-go">꽃 피우기!</button>
+  </div>
+
+  <div class="screen" id="screen-ending">
+    <div class="mascot">🌼</div>
+    <h2>넌 세상에서 가장 소중한 별꽃을 피워냈어!</h2>
+    <p class="desc">끝까지 함께해줘서 고마워 :)</p>
+    <button class="btn" id="btn-restart">처음부터 다시하기</button>
+  </div>
+</div>
+
+<div class="orientation-notice">
+  🔄 가로로 돌려주세요!
+  <div style="font-size:14px;font-weight:normal;">가로 화면에서 더 재밌게 즐길 수 있어요</div>
+</div>
+
+<script type="module">
+import { setupCanvas, loadImages, Input, Sound } from './js/engine.js';
+import { createLevel1 } from './js/level1.js';
+import { createLevel2 } from './js/level2.js';
+import { createLevel3 } from './js/level3.js';
+
+const root = document.getElementById('game-root');
+const canvas = document.getElementById('game-canvas');
+const hud = document.getElementById('hud');
+const touchControls = document.getElementById('touch-controls');
+const canvasCtx = setupCanvas(canvas);
+
+if (window.matchMedia('(pointer: coarse)').matches) document.body.classList.add('touch-device');
+
+const input = new Input({
+  left: document.getElementById('btn-left'),
+  right: document.getElementById('btn-right'),
+  down: document.getElementById('btn-down'),
+  jump: document.getElementById('btn-jump'),
+  action: document.getElementById('btn-action'),
+  roll: document.getElementById('btn-roll'),
+});
+
+const screens = {};
+document.querySelectorAll('.screen').forEach((el) => { screens[el.id] = el; });
+function showScreen(id) {
+  Object.values(screens).forEach((el) => el.classList.remove('active'));
+  if (id) screens[id].classList.add('active');
+}
+function setPlaying(showHud, showTouch) {
+  hud.classList.toggle('active', !!showHud);
+  touchControls.classList.toggle('active', !!showTouch);
+}
+
+const IMAGE_NAMES = [
+  'player.png', 'enemy_hen.png', 'sprout.png', 'flower.png',
+  'item_dew.png', 'item_sun.png', 'item_hail.png', 'bg_road.png', 'bg_magic.png',
+];
+
+loadImages(IMAGE_NAMES).then((images) => {
+  const level1 = createLevel1(canvasCtx, images, root, hud, input, {
+    onSuccess: () => { level1.stop(); setPlaying(false, false); showScreen('screen-s2-intro'); },
+  });
+  const level2 = createLevel2(canvasCtx, images, root, hud, input, {
+    onSuccess: () => { level2.stop(); setPlaying(false, false); showScreen('screen-s3-intro'); },
+  });
+  const level3 = createLevel3(canvasCtx, images, root, hud, input, canvas, {
+    onFinish: () => { level3.stop(); setPlaying(false, false); showScreen('screen-ending'); },
+  });
+  level3.mount();
+
+  document.getElementById('btn-start').addEventListener('click', () => {
+    Sound.unlock();
+    showScreen('screen-s1-intro');
+  });
+  document.getElementById('btn-s1-go').addEventListener('click', () => {
+    showScreen(null); setPlaying(true, true); level1.start();
+  });
+  document.getElementById('btn-s2-go').addEventListener('click', () => {
+    showScreen(null); setPlaying(true, true); level2.start();
+  });
+  document.getElementById('btn-s3-go').addEventListener('click', () => {
+    showScreen(null); setPlaying(false, true); level3.start();
+  });
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    showScreen('screen-title');
+  });
+
+  window.__game = { level1, level2, level3, input, canvasCtx, showScreen, setPlaying };
+});
+</script>
+</body>
+</html>

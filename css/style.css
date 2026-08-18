@@ -1,0 +1,182 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+  background: #1b1e26;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#game-root {
+  position: relative;
+  width: min(98vw, 1100px, calc(96vh * 16 / 9));
+  aspect-ratio: 16 / 9;
+  background: #cbe6ff;
+  border-radius: 14px;
+  box-shadow: 0 12px 44px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+
+#game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* ---------- 오버레이 화면 ---------- */
+.screen {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(10px, 2.5vw, 30px);
+  text-align: center;
+  background-size: cover;
+  background-position: center;
+  background-color: #cbe6ff;
+}
+.screen.active { display: flex; }
+#screen-title, #screen-s1-intro, #screen-s2-intro { background-image: url(../assets/images/bg_road.png); }
+#screen-s3-intro, #screen-ending { background-image: url(../assets/images/bg_magic.png); }
+.screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0.84));
+}
+.screen > * { position: relative; z-index: 1; }
+
+h1 { font-size: clamp(19px, 4vw, 34px); color: #7a4a2b; margin-bottom: 8px; line-height: 1.25; }
+h2 { font-size: clamp(16px, 3.2vw, 26px); color: #7a4a2b; margin-bottom: 6px; }
+p.desc { color: #7d5c3e; font-size: clamp(11px, 2.1vw, 16px); margin-bottom: 12px; line-height: 1.55; }
+
+.btn {
+  background: #ffb703;
+  color: #4a2e0e;
+  border: none;
+  border-radius: 999px;
+  padding: clamp(9px, 1.8vw, 14px) clamp(20px, 3.6vw, 34px);
+  font-size: clamp(13px, 2.3vw, 20px);
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #d68a00;
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 0 0 #d68a00; }
+
+.mascot { font-size: clamp(34px, 7vw, 66px); margin-bottom: 6px; animation: bob 1.4s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+
+/* 조작 안내 카드 */
+.controls-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+  gap: 6px;
+  max-width: 660px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+.ctrl {
+  background: rgba(255,255,255,0.82);
+  border-radius: 10px;
+  padding: 6px 8px;
+  font-size: clamp(10px, 1.7vw, 13px);
+  color: #6b4a2b;
+  line-height: 1.35;
+}
+.ctrl b { display: block; color: #4a2e0e; font-size: clamp(11px, 1.9vw, 14px); }
+
+/* ---------- HUD ---------- */
+.hud {
+  position: absolute;
+  top: 9px; left: 10px; right: 10px;
+  z-index: 20;
+  display: none;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: clamp(11px, 1.9vw, 16px);
+  font-weight: bold;
+  color: #4a2e0e;
+  pointer-events: none;
+}
+.hud.active { display: flex; }
+.hud-left, .hud-right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.hearts, .pill {
+  background: rgba(255,255,255,0.85);
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill.ability { background: rgba(255,236,168,0.95); }
+.hud .gauge-bar {
+  position: absolute;
+  top: 34px; left: 0;
+  width: 46%;
+  height: 12px;
+  background: rgba(255,255,255,0.65);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.hud .gauge-fill { height: 100%; background: linear-gradient(90deg, #6bcb77, #ffd93d); transition: width .2s; }
+.mouth-tip {
+  position: absolute;
+  top: 52px; left: 50%;
+  transform: translateX(-50%);
+  background: rgba(74,46,14,0.82);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: clamp(10px, 1.6vw, 13px);
+  white-space: nowrap;
+}
+
+/* ---------- 터치 컨트롤 ---------- */
+.touch-controls { position: absolute; inset: 0; z-index: 30; display: none; pointer-events: none; }
+.touch-device .touch-controls.active { display: block; }
+.dpad { position: absolute; left: 12px; bottom: 12px; display: flex; gap: 8px; }
+.actions { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 8px; align-items: flex-end; }
+.touch-btn {
+  width: clamp(44px, 9vw, 62px);
+  height: clamp(44px, 9vw, 62px);
+  border-radius: 50%;
+  background: rgba(74,46,14,0.32);
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.65);
+  font-size: clamp(16px, 3vw, 24px);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: auto;
+  touch-action: none;
+}
+.touch-btn:active { background: rgba(74,46,14,0.6); }
+.touch-btn.big { width: clamp(52px, 11vw, 74px); height: clamp(52px, 11vw, 74px); }
+
+/* ---------- 기타 ---------- */
+.orientation-notice {
+  position: fixed; inset: 0; z-index: 100;
+  display: none; align-items: center; justify-content: center; flex-direction: column; gap: 10px;
+  background: #1b1e26; color: #fff; text-align: center; padding: 24px;
+  font-size: clamp(17px, 5vw, 25px);
+}
+@media (pointer: coarse) and (orientation: portrait) { .orientation-notice { display: flex; } }
+
+.toast {
+  position: absolute;
+  bottom: 14px; left: 50%;
+  transform: translate(-50%, 18px);
+  background: rgba(255,255,255,0.94);
+  color: #7a4a2b;
+  padding: 7px 18px;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: clamp(11px, 1.9vw, 15px);
+  opacity: 0;
+  transition: all .28s ease-out;
+  z-index: 40;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
