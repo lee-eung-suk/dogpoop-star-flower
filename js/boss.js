@@ -126,9 +126,9 @@ export function damageBoss(b, env, amount) {
     b.hp = 0;
     b.state = 'dead';
     b.defeated = true;
-    env.camera.setZoom(1.35);
-    env.camera.shake(20);
-    env.camera.freeze(0.5);
+    env.camera.pulseZoom(1.3, 1.2);
+    env.camera.shake(18);
+    env.camera.freeze(0.45);
     env.particles.spawn(b.x, b.y + b.h / 2, 60, ['#ffd93d', '#ff6b9d', '#6bcb77', '#4dd0e1', '#fff'], { speed: 320, star: true, size: 5, life: 1.2 });
     Sound.success();
     if (env.onDefeat) env.onDefeat();

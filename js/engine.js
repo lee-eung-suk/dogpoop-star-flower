@@ -112,24 +112,57 @@ export function drawParallax(ctx, image, camX, factor, y, h, spanW) {
 }
 
 // ---------------- 카메라 ----------------
+// 설계 원칙: 평상시 줌은 1로 고정한다. 속도에 따라 줌이 계속 변하면 어지럽다.
+// 줌은 "연출"에만 쓰고(보스 등장/능력 획득/엔딩), 짧게 썼다가 반드시 1로 돌아온다.
+// 좌우 추적은 데드존을 둬서 작은 움직임에는 화면이 흔들리지 않게 한다.
 export class Camera {
   constructor(worldW, worldH) {
     this.x = 0;
     this.y = 0;
     this.worldW = worldW;
     this.worldH = worldH || LOGICAL_H;
+    this.lockY = !worldH;
     this.zoom = 1;
     this.targetZoom = 1;
+    this.zoomHold = 0;          // 연출 줌이 유지되는 시간
     this.shakeX = 0;
     this.shakeY = 0;
     this.shakePower = 0;
     this.freezeTimer = 0;
-    this.lockY = worldH ? false : true;
+    this.deadzoneW = 200;
+    this.deadzoneH = 120;
+    this.anchorX = 0;
+    this.anchorY = 0;
+    this.inited = false;
   }
-  setZoom(z, instant) {
+
+  // 레벨 시작 시 즉시 대상 위치로 스냅
+  snapTo(tx, ty) {
+    this.anchorX = tx;
+    this.anchorY = ty;
+    this.inited = true;
+    this.zoom = 1;
+    this.targetZoom = 1;
+    this.zoomHold = 0;
+    this.shakePower = 0;
+    this.shakeX = 0;
+    this.shakeY = 0;
+    const halfW = LOGICAL_W / 2;
+    this.x = Math.max(0, Math.min(tx - halfW, Math.max(0, this.worldW - LOGICAL_W)));
+    if (this.lockY) {
+      this.y = 0;
+    } else {
+      const halfH = LOGICAL_H / 2;
+      this.y = Math.max(0, Math.min(ty - halfH, Math.max(0, this.worldH - LOGICAL_H)));
+    }
+  }
+
+  // 연출용 줌: seconds 동안 z 를 유지했다가 스스로 1로 복귀
+  pulseZoom(z, seconds) {
     this.targetZoom = z;
-    if (instant) this.zoom = z;
+    this.zoomHold = seconds || 0.4;
   }
+
   shake(power) {
     this.shakePower = Math.max(this.shakePower, power);
   }
@@ -139,31 +172,50 @@ export class Camera {
   isFrozen() {
     return this.freezeTimer > 0;
   }
-  follow(tx, ty, dt, lead) {
+
+  follow(tx, ty, dt) {
+    if (!this.inited) this.snapTo(tx, ty);
+
+    // 데드존 — 이 상자 안에서 움직이는 동안은 카메라가 가만히 있는다
+    const hw = this.deadzoneW / 2;
+    if (tx > this.anchorX + hw) this.anchorX = tx - hw;
+    else if (tx < this.anchorX - hw) this.anchorX = tx + hw;
+
+    const hh = this.deadzoneH / 2;
+    if (ty > this.anchorY + hh) this.anchorY = ty - hh;
+    else if (ty < this.anchorY - hh) this.anchorY = ty + hh;
+
     const halfW = LOGICAL_W / (2 * this.zoom);
-    let centerX = tx + (lead || 0);
-    centerX = Math.max(halfW, Math.min(centerX, this.worldW - halfW));
-    const desiredX = centerX - LOGICAL_W / 2;
-    const k = 1 - Math.pow(0.0001, dt);
+    const cx = Math.max(halfW, Math.min(this.anchorX, this.worldW - halfW));
+    const desiredX = cx - LOGICAL_W / 2;
+    const k = 1 - Math.pow(0.002, dt);
     this.x += (desiredX - this.x) * k;
 
-    if (!this.lockY) {
-      const halfH = LOGICAL_H / (2 * this.zoom);
-      let centerY = Math.max(halfH, Math.min(ty, this.worldH - halfH));
-      const desiredY = centerY - LOGICAL_H / 2;
-      this.y += (desiredY - this.y) * k;
-    } else {
+    if (this.lockY) {
       this.y = 0;
+    } else {
+      const halfH = LOGICAL_H / (2 * this.zoom);
+      const cy = Math.max(halfH, Math.min(this.anchorY, this.worldH - halfH));
+      this.y += ((cy - LOGICAL_H / 2) - this.y) * k;
     }
   }
+
   update(dt) {
     if (this.freezeTimer > 0) this.freezeTimer -= dt;
-    const kz = 1 - Math.pow(0.005, dt);
+
+    // 연출 줌 유지시간이 끝나면 알아서 1로 돌아온다
+    if (this.zoomHold > 0) {
+      this.zoomHold -= dt;
+      if (this.zoomHold <= 0) this.targetZoom = 1;
+    }
+    const kz = 1 - Math.pow(0.02, dt);
     this.zoom += (this.targetZoom - this.zoom) * kz;
-    if (this.shakePower > 0.01) {
+    if (Math.abs(this.zoom - this.targetZoom) < 0.002) this.zoom = this.targetZoom;
+
+    if (this.shakePower > 0.05) {
       this.shakeX = (Math.random() - 0.5) * this.shakePower;
       this.shakeY = (Math.random() - 0.5) * this.shakePower;
-      this.shakePower *= Math.pow(0.02, dt);
+      this.shakePower *= Math.pow(0.008, dt);
     } else {
       this.shakePower = 0;
       this.shakeX = 0;
@@ -243,10 +295,12 @@ export function moveAndCollide(e, platforms, dt) {
   }
   e.y += e.vy * dt;
   e.onGround = false;
+  e.groundPlatform = null;
   for (const p of platforms) {
     if (rectsOverlap(e, p)) {
       if (prevY + e.h <= p.y + 0.01 && e.vy >= 0) {
         e.y = p.y - e.h; e.vy = 0; e.onGround = true;
+        e.groundPlatform = p;          // 움직이는 발판이 태우고 다니려면 누구 위인지 알아야 한다
       } else if (!p.oneWay && prevY >= p.y + p.h - 0.01) {
         e.y = p.y + p.h; e.vy = 0;
       }

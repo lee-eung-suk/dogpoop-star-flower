@@ -1,92 +1,122 @@
-// 스테이지 1: 시골길 — 조작 학습 → 적 다양화 → 꼬꼬대왕 보스전
+// 스테이지 1: 시골길 — 조작 학습 → 지형 변주 → 꼬꼬대왕 보스전
 import { LOGICAL_W, LOGICAL_H, drawSprite, showToast, Sound } from './engine.js';
 import { makeEnemy, makeItem } from './entities.js';
-import { createLevelRuntime } from './levelcore.js';
+import { createLevelRuntime, solid, ledge, mover, crumble, springPad } from './levelcore.js';
 import { createBoss, updateBoss, damageBoss, drawBoss, drawBossHpBar } from './boss.js';
 import { renderStandardHud } from './hud.js';
 
 const GROUND_Y = 460;
-const WORLD_W = 4400;
-const ARENA_L = 3860;
+const WORLD_W = 4600;
+const ARENA_L = 4000;
 
 function ground(x, w) {
-  return { x, y: GROUND_Y, w, h: LOGICAL_H - GROUND_Y + 200, color: '#c99a5b', topColor: '#8fd17a' };
-}
-function ledge(x, y, w) {
-  return { x, y, w, h: 18, color: '#e0b989', topColor: '#8fd17a' };
+  return solid(x, GROUND_Y, w, LOGICAL_H - GROUND_Y + 220);
 }
 
 export function createLevel1(canvasCtx, images, root, hud, input, { onSuccess }) {
   let boss = null;
   let bossTriggered = false;
-  let introTimer = 0;
+  let cleared = false;
+  let bossEnv = null;
 
   const runtime = createLevelRuntime({
     canvasCtx, images, root, hud, input,
     world: { w: WORLD_W, h: LOGICAL_H },
     spawn: { x: 70, y: GROUND_Y - 44 },
-    skyColor: '#cbe6ff',
+    skyTop: '#8fd3f4', skyColor: '#cbe6ff', skyBottom: '#eaf6e6',
     bgImage: 'bg_road.png',
-    bgFactor: 0.3,
+    bgFactor: 0.28,
 
     build(rt) {
       boss = null;
       bossTriggered = false;
-      introTimer = 0;
+      cleared = false;
 
-      // 지면 (중간에 구덩이 2곳)
-      rt.platforms.push(ground(0, 1180));
-      rt.platforms.push(ground(1320, 1180));
-      rt.platforms.push(ground(2640, 1760));
+      // 보스전 콜백을 한 곳에서 만든다.
+      // (예전 버그: damageBoss 에 levelcore 의 env 를 넘겨 onDefeat 가 없어서 스테이지가 안 넘어갔다)
+      bossEnv = {
+        player: rt.player,
+        projectiles: rt.projectiles,
+        enemies: rt.enemies,
+        particles: rt.particles,
+        camera: rt.camera,
+        onIntroDone: () => { rt.camera.pulseZoom(1, 0.1); },
+        onDefeat: () => {
+          if (cleared) return;
+          cleared = true;
+          showToast(root, '해냈다! 꼬꼬대왕을 물리쳤어! 🎉', 2400);
+          setTimeout(() => {
+            runtime.finish();
+            onSuccess();
+          }, 2000);
+        },
+      };
+      rt.extra.bossEnv = bossEnv;
 
-      // 발판
-      rt.platforms.push(ledge(520, 372, 130));
-      rt.platforms.push(ledge(760, 300, 110));
-      rt.platforms.push(ledge(1180, 350, 120));
-      rt.platforms.push(ledge(1500, 300, 120));
-      rt.platforms.push(ledge(1900, 370, 140));
-      rt.platforms.push(ledge(2180, 290, 120));
-      rt.platforms.push(ledge(2450, 360, 130));
-      rt.platforms.push(ledge(2900, 330, 140));
-      rt.platforms.push(ledge(3200, 260, 120)); // 숨은 보너스
-      rt.platforms.push(ledge(3450, 360, 130));
+      // ---- 지면 (구덩이 3곳) ----
+      rt.platforms.push(ground(0, 1150));
+      rt.platforms.push(ground(1480, 900));
+      rt.platforms.push(ground(2620, 800));
+      rt.platforms.push(ground(3560, WORLD_W - 3560));
 
-      // 보스 아레나 벽 (보스 시작 시 활성화)
-      rt.extra.arenaWall = { x: ARENA_L - 30, y: 0, w: 30, h: LOGICAL_H, invisible: true, disabled: true };
+      // ---- A 구간: 기본 발판 ----
+      rt.platforms.push(ledge(430, 372, 130));
+      rt.platforms.push(ledge(680, 300, 110));
+      rt.platforms.push(ledge(900, 372, 120));
 
-      // 적 배치
-      rt.enemies.push(makeEnemy('chick', 700, GROUND_Y, { range: 70 }));
-      rt.enemies.push(makeEnemy('chick', 980, GROUND_Y, { dir: -1, range: 80 }));
-      rt.enemies.push(makeEnemy('hen', 1450, GROUND_Y, { range: 110 }));
-      rt.enemies.push(makeEnemy('sparrow', 1750, GROUND_Y, { range: 150 }));
-      rt.enemies.push(makeEnemy('hotchi', 2050, GROUND_Y, {}));
-      rt.enemies.push(makeEnemy('hen', 2350, GROUND_Y, { dir: -1, range: 120 }));
-      rt.enemies.push(makeEnemy('sprout', 2700, GROUND_Y, {}));
-      rt.enemies.push(makeEnemy('frost', 2980, GROUND_Y, { range: 120 }));
-      rt.enemies.push(makeEnemy('sparrow', 3250, GROUND_Y, { range: 170 }));
-      rt.enemies.push(makeEnemy('chick', 3520, GROUND_Y, { range: 90 }));
-      rt.enemies.push(makeEnemy('hen', 3700, GROUND_Y, { range: 100 }));
+      // ---- B 구간: 첫 구덩이는 움직이는 발판으로 건넌다 ----
+      rt.platforms.push(mover(1200, 390, 120, 130, 0, 0.9));
+      rt.platforms.push(springPad(1600, GROUND_Y - 16, 80));
+      rt.platforms.push(ledge(1760, 300, 130));
+      rt.platforms.push(ledge(2010, 240, 120));
 
-      // 코인 길
-      for (let x = 220; x < 3700; x += 150) {
-        if (x > 1180 && x < 1320) continue;
-        if (x > 1820 && x < 2640) { /* 상단 코인은 따로 */ }
+      // ---- C 구간: 부서지는 발판 다리 ----
+      rt.platforms.push(crumble(2400, 400, 110));
+      rt.platforms.push(crumble(2560, 360, 110));
+      rt.platforms.push(mover(2760, 330, 120, 0, 90, 1.1));
+      rt.platforms.push(ledge(3000, 380, 130));
+
+      // ---- D 구간: 점프대로 올라가는 숨은 보너스 ----
+      rt.platforms.push(springPad(3180, GROUND_Y - 16, 80));
+      rt.platforms.push(ledge(3120, 210, 200));      // 보너스 발판
+      rt.platforms.push(crumble(3420, 330, 110));
+      rt.platforms.push(ledge(3660, 370, 130));
+      rt.platforms.push(mover(3800, 300, 110, 0, 70, 1.3));
+
+      // 보스 아레나 벽 (보스 시작 시 붙인다)
+      rt.extra.arenaWall = { x: ARENA_L - 30, y: -200, w: 30, h: LOGICAL_H + 200, invisible: true };
+
+      // ---- 적 ----
+      rt.enemies.push(makeEnemy('chick', 620, GROUND_Y, { range: 70 }));
+      rt.enemies.push(makeEnemy('chick', 950, GROUND_Y, { dir: -1, range: 80 }));
+      rt.enemies.push(makeEnemy('hen', 1620, GROUND_Y, { range: 110 }));       // 깃털
+      rt.enemies.push(makeEnemy('sparrow', 1900, GROUND_Y, { range: 160 }));
+      rt.enemies.push(makeEnemy('hotchi', 2180, GROUND_Y, {}));                // 햇살
+      rt.enemies.push(makeEnemy('sprout', 2300, GROUND_Y, {}));                // 새싹
+      rt.enemies.push(makeEnemy('bubble', 2700, GROUND_Y, { range: 120 }));    // 이슬
+      rt.enemies.push(makeEnemy('frost', 3050, GROUND_Y, { range: 130 }));     // 얼음
+      rt.enemies.push(makeEnemy('hen', 3300, GROUND_Y, { dir: -1, range: 120 }));
+      rt.enemies.push(makeEnemy('sparrow', 3620, GROUND_Y, { range: 170 }));
+      rt.enemies.push(makeEnemy('chick', 3900, GROUND_Y, { range: 80 }));
+
+      // ---- 코인 ----
+      for (let x = 200; x < 3950; x += 160) {
+        if ((x > 1150 && x < 1480) || (x > 2380 && x < 2620) || (x > 3420 && x < 3560)) continue;
         rt.items.push(makeItem('coin', x, GROUND_Y - 46));
       }
-      // 발판 위 코인 아치
-      [[520, 372], [760, 300], [1500, 300], [2180, 290], [2900, 330]].forEach(([x, y]) => {
-        for (let i = 0; i < 4; i++) rt.items.push(makeItem('coin', x + 18 + i * 28, y - 34));
+      [[430, 372], [680, 300], [1760, 300], [2010, 240], [3000, 380]].forEach(([x, y]) => {
+        for (let i = 0; i < 4; i++) rt.items.push(makeItem('coin', x + 20 + i * 28, y - 34));
       });
-      // 숨은 보너스존 (높은 발판)
-      for (let i = 0; i < 5; i++) rt.items.push(makeItem('coin', 3212 + i * 24, 214 - Math.sin((i / 4) * Math.PI) * 26));
-      rt.items.push(makeItem('clover', 3260, 190));
+      // 숨은 보너스 (점프대로만 닿는 높은 발판)
+      for (let i = 0; i < 6; i++) rt.items.push(makeItem('coin', 3140 + i * 30, 166));
+      rt.items.push(makeItem('clover', 3300, 166));
 
-      // 회복/특수 아이템
-      rt.items.push(makeItem('leaf', 1240, 316));
-      rt.items.push(makeItem('leaf', 2500, 326));
-      rt.items.push(makeItem('candy', 1960, 336));
-      rt.items.push(makeItem('rainbow', 3500, 326));
-      rt.items.push(makeItem('leaf', 3760, GROUND_Y - 40));
+      // ---- 회복/특수 ----
+      rt.items.push(makeItem('leaf', 1810, 262));
+      rt.items.push(makeItem('candy', 2060, 200));
+      rt.items.push(makeItem('leaf', 3050, 342));
+      rt.items.push(makeItem('rainbow', 3700, 330));
+      rt.items.push(makeItem('leaf', 3950, GROUND_Y - 40));
     },
 
     renderHud(rt) {
@@ -95,65 +125,35 @@ export function createLevel1(canvasCtx, images, root, hud, input, { onSuccess })
 
     bossRef: () => boss,
     onBossHit(rt) {
-      if (boss) damageBoss(boss, rt.env, 1);
-    },
-
-    zoomOverride(rt, z) {
-      if (boss && boss.state === 'intro') return 1.35;
-      if (boss && boss.state === 'dead') return 1.25;
-      if (bossTriggered) return Math.min(z, 0.98);
-      return z;
+      if (boss && bossEnv) damageBoss(boss, bossEnv, 1);
     },
 
     onUpdate(rt, dt) {
       const p = rt.player;
 
-      // 보스 트리거
-      if (!bossTriggered && p.x > ARENA_L - 260) {
+      if (!bossTriggered && p.x > ARENA_L - 240) {
         bossTriggered = true;
-        boss = createBoss(ARENA_L + 340, GROUND_Y);
+        boss = createBoss(ARENA_L + 330, GROUND_Y);
         boss.state = 'intro';
         boss.timer = 0;
-        rt.extra.arenaWall.disabled = false;
         rt.platforms.push(rt.extra.arenaWall);
-        rt.camera.shake(10);
+        rt.camera.pulseZoom(1.25, 1.9);
+        rt.camera.shake(9);
         Sound.bad();
         showToast(root, '꼬꼬대왕이 나타났다! 👑🐔', 2200);
       }
 
       if (boss) {
-        updateBoss(boss, dt, {
-          player: p,
-          projectiles: rt.projectiles,
-          enemies: rt.enemies,
-          particles: rt.particles,
-          camera: rt.camera,
-          onIntroDone: () => { rt.camera.setZoom(1); },
-          onDefeat: () => {
-            showToast(root, '해냈다! 꼬꼬대왕을 물리쳤어! 🎉', 2400);
-            setTimeout(() => {
-              runtime.finish();
-              onSuccess();
-            }, 2100);
-          },
-        });
+        updateBoss(boss, dt, bossEnv);
 
-        // 보스 몸통 접촉 피해
         if (boss.alive && boss.state !== 'dead' && boss.state !== 'intro') {
           const hb = { x: boss.x - boss.w / 2, y: boss.y, w: boss.w, h: boss.h };
-          const php = { x: p.x, y: p.y, w: p.w, h: p.h };
-          const overlap = php.x < hb.x + hb.w && php.x + php.w > hb.x && php.y < hb.y + hb.h && php.y + php.h > hb.y;
+          const overlap = p.x < hb.x + hb.w && p.x + p.w > hb.x && p.y < hb.y + hb.h && p.y + p.h > hb.y;
           if (overlap && p.invincible > 0) {
-            damageBoss(boss, rt.env, 1);
+            damageBoss(boss, bossEnv, 1);
             p.vx = (p.x < boss.x ? -1 : 1) * 260;
           }
         }
-      }
-
-      // 보스 없이 끝까지 간 경우(예외)
-      if (!boss && p.x > WORLD_W - 90) {
-        runtime.finish();
-        onSuccess();
       }
     },
 
@@ -162,13 +162,11 @@ export function createLevel1(canvasCtx, images, root, hud, input, { onSuccess })
     },
 
     drawFront(rt, ctx, camX, camY) {
-      // 골 지점 새싹
       if (!bossTriggered) {
         drawSprite(ctx, images, 'sprout.png', '🌱', ARENA_L + 20 - camX, GROUND_Y - 60 - camY, 54, 54, false);
       }
     },
 
-    // 카메라 변환이 걸리지 않는 화면 좌표계 — 체력바는 여기서 그린다
     drawOverlay(rt, ctx) {
       if (boss && boss.alive) drawBossHpBar(ctx, boss, LOGICAL_W);
     },
