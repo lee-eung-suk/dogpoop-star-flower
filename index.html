@@ -10,6 +10,7 @@
 <div id="game-root">
   <canvas id="game-canvas"></canvas>
   <div class="hud" id="hud"></div>
+  <button class="sound-btn" id="btn-mute" title="배경음악 켜기/끄기" aria-label="배경음악 켜기/끄기">🔊</button>
 
   <div class="touch-controls" id="touch-controls">
     <div class="dpad">
@@ -81,7 +82,7 @@
 </div>
 
 <script type="module">
-import { setupCanvas, loadImages, Input, Sound, setDifficulty } from './js/engine.js';
+import { setupCanvas, loadImages, Input, Sound, setDifficulty, Music } from './js/engine.js';
 import { createLevel1 } from './js/level1.js';
 import { createLevel2 } from './js/level2.js';
 import { createLevel3 } from './js/level3.js';
@@ -145,8 +146,24 @@ loadImages(IMAGE_NAMES).then((images) => {
   });
   setDifficulty('easy');
 
+  // 배경음악 — 자동재생 정책 때문에 첫 재생은 클릭 안에서만 가능하다
+  Music.init('assets/sounds/bgm.mp3');
+  const muteBtn = document.getElementById('btn-mute');
+  function paintMuteBtn() {
+    muteBtn.textContent = Music.isMuted() ? '🔇' : '🔊';
+    muteBtn.classList.toggle('off', Music.isMuted());
+  }
+  paintMuteBtn();
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    Music.toggleMute();
+    paintMuteBtn();
+  });
+
   document.getElementById('btn-start').addEventListener('click', () => {
     Sound.unlock();
+    Music.play();
+    paintMuteBtn();
     showScreen('screen-s1-intro');
   });
   document.getElementById('btn-s1-go').addEventListener('click', () => {

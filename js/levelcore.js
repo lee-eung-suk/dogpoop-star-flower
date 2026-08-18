@@ -2,7 +2,7 @@
 import {
   LOGICAL_W, LOGICAL_H, drawSprite, drawParallax, Camera, Particles,
   Sound, rectsOverlap, showToast, randomEncouragement, drawStar,
-  roundRect, drawShadow, Difficulty,
+  roundRect, drawShadow, Difficulty, Music,
 } from './engine.js';
 import {
   updateEnemy, updateProjectiles, bobItems, makeItem, makeIceBlock,
@@ -163,6 +163,7 @@ export function createLevelRuntime(cfg) {
       e.preventDefault();
       rt.paused = !rt.paused;
       if (!rt.paused) rt.lastTs = performance.now();
+      Music.duck(rt.paused);
       input.reset();
     }
   });

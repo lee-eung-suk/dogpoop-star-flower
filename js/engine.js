@@ -458,6 +458,86 @@ export const Sound = (() => {
   };
 })();
 
+// ---------------- 배경음악 ----------------
+// 긴 음원은 Web Audio 로 디코딩하면 메모리를 많이 먹으므로 <audio> 로 스트리밍한다.
+// 브라우저 자동재생 정책상 첫 재생은 반드시 "사용자 클릭" 안에서 호출해야 한다.
+export const Music = (() => {
+  const STORAGE_KEY = 'dogpoop.muted';
+  let el = null;
+  let baseVolume = 0.32;   // 효과음이 묻히지 않는 선
+  let muted = false;
+  let fadeTimer = null;
+
+  function init(src) {
+    if (el) return el;
+    el = new Audio(src);
+    el.loop = true;
+    el.preload = 'auto';
+    el.volume = 0;
+    try { muted = localStorage.getItem(STORAGE_KEY) === '1'; } catch (e) { muted = false; }
+    return el;
+  }
+
+  function fadeTo(target, seconds) {
+    if (!el) return;
+    clearInterval(fadeTimer);
+    const steps = Math.max(1, Math.round((seconds || 0.8) * 30));
+    const from = el.volume;
+    let i = 0;
+    fadeTimer = setInterval(() => {
+      i += 1;
+      const t = i / steps;
+      el.volume = Math.max(0, Math.min(1, from + (target - from) * t));
+      if (i >= steps) clearInterval(fadeTimer);
+    }, 1000 / 30);
+  }
+
+  return {
+    init,
+    isMuted() { return muted; },
+    // 재생 상태 조회 (디버깅/UI용)
+    state() {
+      if (!el) return { ready: false };
+      return {
+        ready: true,
+        playing: !el.paused && !el.ended,
+        volume: +el.volume.toFixed(3),
+        muted,
+        currentTime: +el.currentTime.toFixed(2),
+        duration: isFinite(el.duration) ? +el.duration.toFixed(1) : null,
+        loop: el.loop,
+      };
+    },
+    // 반드시 클릭 핸들러 안에서 호출할 것
+    play() {
+      if (!el) return;
+      const p = el.play();
+      if (p && p.catch) p.catch(() => { /* 자동재생 차단 — 조용히 무시 */ });
+      fadeTo(muted ? 0 : baseVolume, 1.2);
+    },
+    pause() { if (el) el.pause(); },
+    resume() {
+      if (!el || muted) return;
+      const p = el.play();
+      if (p && p.catch) p.catch(() => {});
+    },
+    // 일시정지 중에는 소리를 줄여둔다
+    duck(on) { if (!el || muted) return; fadeTo(on ? baseVolume * 0.25 : baseVolume, 0.3); },
+    toggleMute() {
+      muted = !muted;
+      try { localStorage.setItem(STORAGE_KEY, muted ? '1' : '0'); } catch (e) { /* 무시 */ }
+      if (muted) {
+        fadeTo(0, 0.3);
+      } else {
+        const p = el && el.play();
+        if (p && p.catch) p.catch(() => {});
+        fadeTo(baseVolume, 0.5);
+      }
+      return muted;
+    },
+  };
+})();
+
 const ENCOURAGEMENTS = ['잘하고 있어! 💪', '조금만 더 힘내!', '멋져! 계속 가보자!', '와, 잘한다!', '대단한걸? ✨'];
 export function randomEncouragement() {
   return ENCOURAGEMENTS[Math.floor(Math.random() * ENCOURAGEMENTS.length)];
