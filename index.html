@@ -10,6 +10,7 @@
 <div id="game-root">
   <canvas id="game-canvas"></canvas>
   <div class="hud" id="hud"></div>
+  <div class="stage-banner" id="stage-banner"><b></b><span></span></div>
   <button class="sound-btn" id="btn-mute" title="배경음악 켜기/끄기" aria-label="배경음악 켜기/끄기">🔊</button>
 
   <div class="touch-controls" id="touch-controls">
@@ -29,8 +30,14 @@
     </div>
   </div>
 
-  <div class="screen active" id="screen-title">
-    <div class="mascot">🐾</div>
+  <div class="loading" id="loading">
+    <div class="loading-pot">💩</div>
+    <div class="loading-text">강아지똥이 준비하는 중…</div>
+    <div class="loading-bar"><i></i></div>
+  </div>
+
+  <div class="screen" id="screen-title">
+    <img class="mascot-img" id="title-mascot" src="assets/images/player.png" alt="강아지똥">
     <h1>강아지똥의 별꽃 피우기 대작전!</h1>
     <p class="desc">세상에 쓸모없는 것은 없어! 우리는 모두 소중해 🌼</p>
     <div class="diff-row">
@@ -120,6 +127,16 @@ function showScreen(id) {
   Object.values(screens).forEach((el) => el.classList.remove('active'));
   if (id) screens[id].classList.add('active');
 }
+
+// 스테이지 시작 배너 — 이름이 스윽 지나가면 "시작한다"는 느낌이 확 산다
+const bannerEl = document.getElementById('stage-banner');
+function showStageBanner(num, name) {
+  bannerEl.querySelector('b').textContent = 'STAGE ' + num;
+  bannerEl.querySelector('span').textContent = name;
+  bannerEl.classList.remove('show');
+  void bannerEl.offsetWidth;
+  bannerEl.classList.add('show');
+}
 function setPlaying(showHud, showTouch) {
   hud.classList.toggle('active', !!showHud);
   touchControls.classList.toggle('active', !!showTouch);
@@ -177,18 +194,27 @@ loadImages(IMAGE_NAMES).then((images) => {
   });
   document.getElementById('btn-s1-go').addEventListener('click', () => {
     showScreen(null); setPlaying(true, true); level1.start();
+    showStageBanner(1, '시골길');
   });
   document.getElementById('btn-s2-go').addEventListener('click', () => {
     showScreen(null); setPlaying(true, true); level2.start();
+    showStageBanner(2, '이슬 정원');
   });
   document.getElementById('btn-s3-go').addEventListener('click', () => {
     showScreen(null); setPlaying(true, true); level3.start();
+    showStageBanner(3, '별빛 길');
   });
   document.getElementById('btn-restart').addEventListener('click', () => {
     showScreen('screen-title');
   });
 
-  window.__game = { level1, level2, level3, input, canvasCtx, showScreen, setPlaying };
+  // 준비가 끝나야 타이틀을 보여준다
+  const loadingEl = document.getElementById('loading');
+  loadingEl.classList.add('done');
+  setTimeout(() => loadingEl.remove(), 500);
+  showScreen('screen-title');
+
+  window.__game = { level1, level2, level3, input, canvasCtx, showScreen, setPlaying, showStageBanner };
 });
 </script>
 </body>

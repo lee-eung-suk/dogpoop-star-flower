@@ -11,6 +11,7 @@ import {
 import {
   createPlayer, resetPlayer, updatePlayer, hurtPlayer, drawPlayer, playerHitbox, P,
 } from './player.js';
+import { drawCreature, drawCoin } from './creatures.js';
 
 // ---------------- 발판 만들기 (레벨에서 쓰는 도우미) ----------------
 export function solid(x, y, w, h, opts) {
@@ -69,73 +70,119 @@ function drawTerrain(ctx, pl, camX, camY) {
   const y = pl.y - camY;
   const w = pl.w;
   const h = pl.h;
-  const thin = h <= 24;
+  const thin = h <= 30;
+  const grassH = thin ? 9 : 15;
 
   ctx.save();
   if (pl.crumble && pl.crumble.state === 'shaking') {
     ctx.translate(Math.sin(pl.crumble.timer * 60) * 2.5, 0);
   }
 
-  roundRect(ctx, x, y, w, h, thin ? 8 : 10);
-  ctx.fillStyle = pl.color;
+  // ---- 흙: 아래로 갈수록 어두워지는 그라디언트 (통짜 갈색 벽처럼 보이지 않게) ----
+  const dirtTop = pl.color || '#d2a878';
+  const dirtBot = pl.dirtBottom || '#a97c4e';
+  const dg = ctx.createLinearGradient(0, y, 0, y + h);
+  dg.addColorStop(0, dirtTop);
+  dg.addColorStop(0.55, dirtBot);
+  dg.addColorStop(1, thin ? dirtBot : '#8b6238');
+  roundRect(ctx, x, y, w, h, thin ? 9 : 12);
+  ctx.fillStyle = dg;
   ctx.fill();
 
+  // 흙 알갱이 — 위치를 좌표로 고정해 프레임마다 튀지 않게 한다
   ctx.save();
+  roundRect(ctx, x, y, w, h, thin ? 9 : 12);
   ctx.clip();
-  ctx.globalAlpha = 0.13;
-  ctx.strokeStyle = '#7d5533';
-  ctx.lineWidth = 2;
-  for (let i = 0; i < w; i += 26) {
-    ctx.beginPath();
-    ctx.moveTo(x + i, y + h);
-    ctx.lineTo(x + i + 14, y + 10);
-    ctx.stroke();
+  ctx.fillStyle = 'rgba(120,82,48,0.22)';
+  const stepX = 34;
+  for (let i = 0; i < w; i += stepX) {
+    const seed = Math.abs(Math.sin((pl.x + i) * 0.37)) ;
+    const px = x + i + seed * 20;
+    for (let j = grassH + 8; j < h; j += 30) {
+      const sy = y + j + ((pl.x + i + j) % 11);
+      ctx.beginPath();
+      ctx.ellipse(px, sy, 3.2, 2.2, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
   ctx.restore();
 
-  roundRect(ctx, x, y, w, Math.min(thin ? 7 : 12, h), thin ? 6 : 8);
-  ctx.fillStyle = pl.topColor;
+  // ---- 잔디: 물결치는 윗면 ----
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x, y + grassH);
+  const seg = 22;
+  for (let i = 0; i <= w; i += seg) {
+    const bump = Math.sin((pl.x + i) * 0.09) * 2.2;
+    ctx.lineTo(x + i, y + grassH + bump);
+  }
+  ctx.lineTo(x + w, y + grassH);
+  ctx.lineTo(x + w, y + 2);
+  ctx.quadraticCurveTo(x + w, y, x + w - 6, y);
+  ctx.lineTo(x + 6, y);
+  ctx.quadraticCurveTo(x, y, x, y + 2);
+  ctx.closePath();
+  const gg = ctx.createLinearGradient(0, y, 0, y + grassH);
+  gg.addColorStop(0, pl.topColor || '#a5dd88');
+  gg.addColorStop(1, '#79bf62');
+  ctx.fillStyle = gg;
   ctx.fill();
+  ctx.restore();
 
-  // 종류별 표식 — 보면 바로 알 수 있게
-  if (pl.spring) {
-    ctx.fillStyle = '#e07a1f';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('▲▲▲', x + w / 2, y + h / 2);
-  } else if (pl.move) {
-    ctx.strokeStyle = 'rgba(255,255,255,0.75)';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(x + w / 2 - 12, y + h / 2 + 3);
-    ctx.lineTo(x + w / 2 + 12, y + h / 2 + 3);
-    ctx.stroke();
-  } else if (pl.iceBlock) {
-    ctx.globalAlpha = 0.55;
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(x + 8, y + h - 8);
-    ctx.lineTo(x + w / 2, y + 8);
-    ctx.lineTo(x + w - 8, y + h - 8);
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  } else if (!thin || pl.oneWay) {
-    ctx.strokeStyle = '#79c063';
-    ctx.lineWidth = 2.5;
+  // ---- 풀잎 ----
+  if (!pl.iceBlock && !pl.spring) {
+    ctx.save();
+    ctx.strokeStyle = '#6fb257';
+    ctx.lineWidth = 2.2;
     ctx.lineCap = 'round';
-    for (let i = 12; i < w - 8; i += 46) {
-      const gx = x + i + ((pl.x + i) % 13);
+    for (let i = 10; i < w - 6; i += 38) {
+      const gx = x + i + ((pl.x + i) % 9);
+      const lean = ((pl.x + i) % 5) - 2;
       ctx.beginPath();
-      ctx.moveTo(gx, y + 1);
-      ctx.quadraticCurveTo(gx - 3, y - 6, gx - 5, y - 9);
+      ctx.moveTo(gx, y + grassH - 1);
+      ctx.quadraticCurveTo(gx + lean - 2, y - 3, gx + lean - 4, y - 8);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(gx + 3, y + 1);
-      ctx.quadraticCurveTo(gx + 6, y - 5, gx + 9, y - 8);
+      ctx.moveTo(gx + 4, y + grassH - 1);
+      ctx.quadraticCurveTo(gx + lean + 5, y - 2, gx + lean + 8, y - 6);
       ctx.stroke();
     }
+    ctx.restore();
+  }
+
+  // ---- 종류별 표식 ----
+  if (pl.spring) {
+    ctx.fillStyle = '#e8760f';
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) {
+      const bx = x + w / 2 + (i - 1) * 18;
+      ctx.moveTo(bx - 8, y + grassH + 6);
+      ctx.lineTo(bx, y + grassH - 4);
+      ctx.lineTo(bx + 8, y + grassH + 6);
+    }
+    ctx.fill();
+  } else if (pl.move) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    const my = y + h / 2 + 3;
+    ctx.beginPath();
+    ctx.moveTo(x + w / 2 - 14, my);
+    ctx.lineTo(x + w / 2 + 14, my);
+    ctx.stroke();
+    ctx.restore();
+  } else if (pl.iceBlock) {
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(x + 9, y + h - 9);
+    ctx.lineTo(x + w / 2, y + 9);
+    ctx.lineTo(x + w - 9, y + h - 9);
+    ctx.stroke();
+    ctx.restore();
   }
   ctx.restore();
 }
@@ -547,18 +594,7 @@ export function createLevelRuntime(cfg) {
       const iy = it.y - camY;
       if (ix > LOGICAL_W + 120 || ix + it.w < -120) continue;
       if (it.kind === 'coin') {
-        const r = it.w / 2;
-        ctx.beginPath();
-        ctx.arc(ix + r, iy + r, r, 0, Math.PI * 2);
-        ctx.fillStyle = '#ffd93d';
-        ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#e0a300';
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.ellipse(ix + r * 0.72, iy + r * 0.66, r * 0.22, r * 0.36, -0.5, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-        ctx.fill();
+        drawCoin(ctx, ix + it.w / 2, iy + it.h / 2, it.w / 2, rt.time + it.t);
         continue;
       }
       if (it.kind === 'ability') {
@@ -584,7 +620,11 @@ export function createLevelRuntime(cfg) {
         ctx.fillStyle = '#a8dcff';
         ctx.fillRect(e.x - camX - 3, e.y - camY - 3, e.w + 6, e.h + 6);
       }
-      drawSprite(ctx, images, e.def.image, e.def.emoji, e.x - camX, e.y - camY, e.w, e.h, e.dir < 0);
+      if (e.def.image && images[e.def.image]) {
+        drawSprite(ctx, images, e.def.image, e.def.emoji, e.x - camX, e.y - camY, e.w, e.h, e.dir < 0);
+      } else {
+        drawCreature(ctx, e.type, e.x - camX, e.y - camY, e.w, e.h, rt.time + e.timer, e.dir);
+      }
       ctx.restore();
     }
 
