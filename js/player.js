@@ -1,5 +1,5 @@
 // 강아지똥 플레이어: 달리기 / 이단점프 / 둥실 날기 / 구르기 / 흡입 / 뱉기 / 복사능력
-import { moveAndCollide, rectsOverlap, Sound } from './engine.js';
+import { moveAndCollide, rectsOverlap, Sound, Difficulty } from './engine.js';
 import { ABILITIES, makeProjectile } from './entities.js';
 
 export const P = {
@@ -35,20 +35,21 @@ export function createPlayer(x, y) {
     vx: 0, vy: 0,
     onGround: false,
     facing: 1,
-    maxHp: P.MAX_HP,
-    hp: P.MAX_HP,
-    lives: 3,
+    maxHp: Difficulty.playerHp,
+    hp: Difficulty.playerHp,
+    lives: Difficulty.lives,
     squash: 1,
   };
   resetPlayer(p, x, y);
-  p.hp = P.MAX_HP;
-  p.lives = 3;
+  p.hp = Difficulty.playerHp;
+  p.lives = Difficulty.lives;
   return p;
 }
 
 export function resetPlayer(p, x, y) {
   p.x = x; p.y = y;
   p.vx = 0; p.vy = 0;
+  p.maxHp = Difficulty.playerHp;
   p.hp = p.maxHp;          // 부활 시 체력 회복 (빠뜨리면 음수 HP로 계속 죽는다)
   p.invuln = 0.9;          // 부활 직후 잠깐 무적
   p.onGround = false;
@@ -345,7 +346,7 @@ function fireAbility(p, env) {
 export function hurtPlayer(p, env, fromX) {
   if (p.invuln > 0 || p.invincible > 0 || p.rolling || p.dead) return false;
   p.hp -= 1;
-  p.invuln = P.INVULN_TIME;
+  p.invuln = Difficulty.invuln;
   const dir = fromX != null && fromX > p.x + p.w / 2 ? -1 : 1;
   p.vx = dir * 210;
   p.vy = -270;

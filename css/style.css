@@ -180,3 +180,15 @@ p.desc { color: #7d5c3e; font-size: clamp(11px, 2.1vw, 16px); margin-bottom: 12p
   pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* 난이도 선택 */
+.diff-row { display: flex; gap: 10px; margin-bottom: 6px; }
+.diff-btn {
+  background: rgba(255,255,255,0.85);
+  color: #7a4a2b;
+  box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+  padding: clamp(7px, 1.4vw, 10px) clamp(16px, 2.8vw, 24px);
+  font-size: clamp(12px, 2vw, 16px);
+}
+.diff-btn.selected { background: #ffb703; color: #4a2e0e; box-shadow: 0 3px 0 #d68a00; }
+.diff-note { font-size: clamp(10px, 1.7vw, 13px); margin-bottom: 10px; opacity: 0.85; }

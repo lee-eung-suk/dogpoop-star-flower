@@ -1,5 +1,5 @@
 // 적 / 아이템 / 투사체 정의
-import { rectsOverlap } from './engine.js';
+import { rectsOverlap, Difficulty } from './engine.js';
 
 // ---------------- 복사 능력 ----------------
 // 5종이 서로 "쓰는 법"이 달라야 의미가 있다.
@@ -66,7 +66,7 @@ export function makeEnemy(type, x, y, opts) {
     type, def,
     x: x - def.w / 2, y: y - def.h,
     w: def.w, h: def.h,
-    vx: (o.dir || 1) * def.speed, vy: 0,
+    vx: (o.dir || 1) * def.speed * Difficulty.enemySpeed, vy: 0,
     dir: o.dir || 1,
     baseX: x, baseY: y,
     range: o.range || 80,
@@ -111,7 +111,7 @@ export function updateEnemy(e, dt, player) {
       if (e.x < e.baseX - e.range) e.dir = 1;
       if (e.x > e.baseX + e.range) e.dir = -1;
     }
-    e.vx = e.dir * e.def.speed * (near ? 1.9 : 1);
+    e.vx = e.dir * e.def.speed * Difficulty.enemySpeed * (near ? 1.7 : 1);
     e.x += e.vx * dt;
     e.state = near ? 'charge' : 'idle';
   } else if (b === 'fly') {

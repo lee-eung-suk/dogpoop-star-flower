@@ -2,7 +2,7 @@
 import {
   LOGICAL_W, LOGICAL_H, drawSprite, drawParallax, Camera, Particles,
   Sound, rectsOverlap, showToast, randomEncouragement, drawStar,
-  roundRect, drawShadow,
+  roundRect, drawShadow, Difficulty,
 } from './engine.js';
 import {
   updateEnemy, updateProjectiles, bobItems, makeItem, makeIceBlock,
@@ -207,7 +207,7 @@ export function createLevelRuntime(cfg) {
     rt.time = 0;
     rt.paused = false;
     resetPlayer(player, cfg.spawn.x, cfg.spawn.y);
-    player.lives = rt.livesCarry != null ? rt.livesCarry : 3;
+    player.lives = rt.livesCarry != null ? rt.livesCarry : Difficulty.lives;
     camera.snapTo(player.x + player.w / 2, player.y + player.h / 2);
     if (cfg.onReset) cfg.onReset(rt);
     updateHud();
@@ -299,7 +299,7 @@ export function createLevelRuntime(cfg) {
     camera.shake(14);
     if (player.lives <= 0) {
       showToast(root, '괜찮아, 처음부터 다시 해보자! 🌱');
-      rt.livesCarry = 3;
+      rt.livesCarry = Difficulty.lives;
     } else {
       showToast(root, `괜찮아, 다시! (남은 목숨 ${player.lives}) 🌱`);
       rt.livesCarry = player.lives;

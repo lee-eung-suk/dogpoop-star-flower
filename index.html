@@ -28,6 +28,11 @@
     <div class="mascot">🐾</div>
     <h1>강아지똥의 별꽃 피우기 대작전!</h1>
     <p class="desc">세상에 쓸모없는 것은 없어! 우리는 모두 소중해 🌼</p>
+    <div class="diff-row">
+      <button class="btn diff-btn selected" id="btn-easy" data-mode="easy">🌱 쉬움</button>
+      <button class="btn diff-btn" id="btn-normal" data-mode="normal">🔥 보통</button>
+    </div>
+    <p class="desc diff-note" id="diff-note">쉬움: 하트 8개 · 목숨 4개 · 적이 느려요</p>
     <button class="btn" id="btn-start">시작하기</button>
   </div>
 
@@ -76,7 +81,7 @@
 </div>
 
 <script type="module">
-import { setupCanvas, loadImages, Input, Sound } from './js/engine.js';
+import { setupCanvas, loadImages, Input, Sound, setDifficulty } from './js/engine.js';
 import { createLevel1 } from './js/level1.js';
 import { createLevel2 } from './js/level2.js';
 import { createLevel3 } from './js/level3.js';
@@ -125,6 +130,20 @@ loadImages(IMAGE_NAMES).then((images) => {
     onFinish: () => { level3.stop(); setPlaying(false, false); showScreen('screen-ending'); },
   });
   level3.mount();
+
+  const NOTES = {
+    easy: '쉬움: 하트 8개 · 목숨 4개 · 적이 느려요',
+    normal: '보통: 하트 6개 · 목숨 3개 · 적이 빨라요',
+  };
+  document.querySelectorAll('.diff-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.diff-btn').forEach((b) => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      setDifficulty(btn.dataset.mode);
+      document.getElementById('diff-note').textContent = NOTES[btn.dataset.mode];
+    });
+  });
+  setDifficulty('easy');
 
   document.getElementById('btn-start').addEventListener('click', () => {
     Sound.unlock();

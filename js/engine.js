@@ -111,6 +111,31 @@ export function drawParallax(ctx, image, camX, factor, y, h, spanW) {
   }
 }
 
+// ---------------- 난이도 ----------------
+// 한 곳에서만 바꾸면 플레이어/적/보스가 모두 따라오도록 값을 모아둔다.
+export const Difficulty = {
+  mode: 'easy',
+  playerHp: 8,      // 하트 수
+  lives: 4,         // 목숨
+  invuln: 1.6,      // 맞은 뒤 무적 시간(초) — 길수록 연속으로 안 맞는다
+  enemySpeed: 0.78, // 적 이동 속도 배율
+  bossHp: 3,
+  bossRest: 3.0,    // 보스가 패턴 사이에 쉬는 시간
+  bossTell: 1.45,   // 공격 예고 시간 — 길수록 피하기 쉽다
+};
+
+const PRESETS = {
+  easy:   { playerHp: 8, lives: 4, invuln: 1.6, enemySpeed: 0.78, bossHp: 3, bossRest: 3.0, bossTell: 1.45 },
+  normal: { playerHp: 6, lives: 3, invuln: 1.2, enemySpeed: 1.0,  bossHp: 4, bossRest: 2.2, bossTell: 1.1  },
+};
+
+export function setDifficulty(mode) {
+  const preset = PRESETS[mode] || PRESETS.easy;
+  Difficulty.mode = PRESETS[mode] ? mode : 'easy';
+  Object.assign(Difficulty, preset);
+  return Difficulty;
+}
+
 // ---------------- 카메라 ----------------
 // 설계 원칙: 평상시 줌은 1로 고정한다. 속도에 따라 줌이 계속 변하면 어지럽다.
 // 줌은 "연출"에만 쓰고(보스 등장/능력 획득/엔딩), 짧게 썼다가 반드시 1로 돌아온다.
